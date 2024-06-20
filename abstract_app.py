@@ -1,10 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import pandas as pd
-import requests
 
-# Fetch title, author, and abstract from OpenAlex API
 def fetch_openalex_data(doi):
+    import requests
     url = f"https://api.openalex.org/works/doi:{doi}"
     response = requests.get(url)
     if response.status_code == 200:
@@ -13,7 +11,6 @@ def fetch_openalex_data(doi):
         authors = ', '.join([author['author']['display_name'] for author in data.get('authorships', [])])
         abstract_inverted_index = data.get('abstract_inverted_index', {})
         
-        # Translate inverted index to plain text
         if abstract_inverted_index:
             max_index = max(max(indices) for indices in abstract_inverted_index.values())
             abstract_list = [''] * (max_index + 1)
@@ -28,10 +25,9 @@ def fetch_openalex_data(doi):
     else:
         return [doi, 'Error', 'Error', 'Error']
 
-# Proccess input file and save the output file
 def process_file(input_file, output_format):
+    import pandas as pd
     try:
-        # Load the input file based on its extension
         if input_file.endswith('.csv'):
             df = pd.read_csv(input_file)
         elif input_file.endswith('.xlsx'):
@@ -39,11 +35,9 @@ def process_file(input_file, output_format):
         else:
             raise ValueError("Unsupported file format")
         
-        # Check if input file has a 'DOI' column
         if 'DOI' not in df.columns:
             raise ValueError("The input file must contain a 'DOI' column.")
         
-        # Normalize DOIs (trim whitespace and remove url)
         def normalize_doi(doi):
             doi = doi.strip()
             if doi.startswith("https://www.doi.org/"):
@@ -71,18 +65,15 @@ def process_file(input_file, output_format):
     except Exception as e:
         messagebox.showerror("Error", str(e))
 
-# Function to select input file and process it
 def select_and_process_file():
     input_file = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv"), ("Excel files", "*.xlsx")])
     if input_file:
         output_format = output_format_var.get()
         process_file(input_file, output_format)
 
-# Main window
 root = tk.Tk()
 root.title("Abstract App")
 
-# Widgets
 tk.Label(root, text="Select Output Format:").pack(pady=10)
 output_format_var = tk.StringVar(value="csv")
 tk.Radiobutton(root, text="Comma-separated", variable=output_format_var, value="csv").pack()
@@ -90,6 +81,5 @@ tk.Radiobutton(root, text="Excel", variable=output_format_var, value="xlsx").pac
 
 tk.Button(root, text="Select Input File and Process", command=select_and_process_file).pack(pady=20)
 
-# Entry point
 if __name__ == "__main__":
     root.mainloop()
